@@ -1,0 +1,47 @@
+<head>
+  <style> body { margin: 0; } </style>
+  <script src="//cdn.jsdelivr.net/npm/globe.gl"></script>
+</head>
+
+<body>
+  <div id="globeViz"></div>
+
+  <script type="module">
+    import { MeshLambertMaterial, DoubleSide, SphereGeometry, MeshBasicMaterial, Mesh } from 'https://esm.sh/three';
+    import * as topojson from 'https://esm.sh/topojson-client';
+
+    const world = new Globe(document.getElementById('globeViz'))
+      .backgroundColor('rgba(0,0,0,0)')
+      .showGlobe(false)
+      .showAtmosphere(false);
+
+    fetch('//cdn.jsdelivr.net/npm/world-atlas/land-110m.json').then(res => res.json())
+      .then(landTopo => {
+        world
+          .polygonsData(topojson.feature(landTopo, landTopo.objects.land).features)
+          .polygonCapMaterial(new MeshLambertMaterial({ color: 'darkslategrey', side: DoubleSide }))
+          .polygonSideColor(() => 'rgba(0,0,0,0)');
+      });
+
+    // 👉 Add satellites
+    const satellites = [
+      { name: 'Sentinel-5P', lat: 10, lng: -20, altitude: 0.1 },
+      { name: 'GHGSat-C1', lat: 45, lng: 90, altitude: 0.12 },
+      { name: 'MethaneSAT', lat: -30, lng: 130, altitude: 0.08 }
+    ];
+
+    world
+      .objectsData(satellites)
+      .objectLat(d => d.lat)
+      .objectLng(d => d.lng)
+      .objectAltitude(d => d.altitude)
+      .objectLabel(d => d.name)
+      .objectThreeObject(() => {
+        const sat = new Mesh(
+          new SphereGeometry(0.5, 8, 8),
+          new MeshBasicMaterial({ color: 'yellow' })
+        );
+        return sat;
+      });
+  </script>
+</body>
